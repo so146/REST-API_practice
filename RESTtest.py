@@ -36,10 +36,10 @@ data = json.loads(resp.text)
 out = data['response']['groups'][0]['items']#[0]['venue']['location']
 print(len(out))
 #print(out)
-
+"""
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 sys.stderr = codecs.getwriter('utf8')(sys.stderr)
-"""
+
 foursquare_client_id = "WUN5NHHMMWWUHYWCWQD2H1YATO3SHG552XYKJF1CPHWMU2KV"
 foursquare_client_secret = "F2BAWL0NH40O52AXDTN5TW31X5JSKDCXXNOVWKNC2ZC2FRNP"
 
@@ -52,12 +52,36 @@ def findARestaurant(mealType,location):
 	url = ('https://api.foursquare.com/v2/venues/search?client_id=%s&client_secret=%s&v=20130815&ll=%s,%s&query=%s'% (foursquare_client_id, foursquare_client_secret, lat, lon, mealType))
 	h = httplib2.Http()
 	result = json.loads(h.request(url,'GET')[1])
-	print(result)
+	#print(result['response']['venues'][0])
 	#3. Grab the first restaurant
-	#4. Get a  300x300 picture of the restaurant using the venue_id (you can change this by altering the 300x300 value in the URL or replacing it with 'orginal' to get the original picture
+	rest1 = result['response']['venues'][0]
+	name = rest1['name']
+	venue_id = rest1['id']
+	rest_address = rest1['location']['formattedAddress']
+	address = ""
+	for i in rest_address:
+		address += i + " "
+	#4. Get a  300x300 picture of the restaurant using the venue_id (you can change this by altering the 300x300 value in the URL or replacing it with 'orginal' to get the original picture	
+	photo_url = ('https://api.foursquare.com/v2/venues/%s/photos?client_id=%s&v=20150603&client_secret=%s' % ((venue_id,foursquare_client_id,foursquare_client_secret)))
+	photo_result = json.loads(h.request(photo_url, 'GET')[1])
 	#5. Grab the first image
 	#6. If no image is available, insert default a image url
-	#7. Return a dictionary containing the restaurant name, address, and image url	
+	if photo_result['response']['photos']['items']:
+		#print(photo_result['response']['photos']['items'])
+		firstpic = photo_result['response']['photos']['items'][0]
+		prefix = firstpic['prefix']
+		suffix = firstpic['suffix']
+		imageURL = prefix + "300x300" + suffix
+	else:
+	#6.  if no image available, insert default image url
+		imageURL = "http://pixabay.com/get/8926af5eb597ca51ca4c/1433440765/cheeseburger-34314_1280.png?direct"
+	#7. Return a dictionary containing the restaurant name, address, and image url
+	restaurantInfo = {'name':name, 'address':address, 'image':imageURL}
+	print "Restaurant Name: %s" % restaurantInfo['name']
+	print "Restaurant Address: %s" % restaurantInfo['address']
+	print "Image: %s \n" % restaurantInfo['image']
+	return restaurantInfo
+
 if __name__ == '__main__':
 	findARestaurant("Pizza", "Tokyo, Japan")
 	findARestaurant("Tacos", "Jakarta, Indonesia")
